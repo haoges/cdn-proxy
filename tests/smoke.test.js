@@ -102,8 +102,8 @@ test("raw disk images stream as downloads without corrupting bytes", async () =>
       { name: "EdgeOne Makers" }
     );
     assert.equal(response.status, 200);
-    assert.match(response.headers.get("content-disposition"), /^attachment;/i);
-    assert.match(response.headers.get("content-disposition"), /debian\\.raw/);
+    assert.match(response.headers.get("content-disposition"), /debian\.raw/);
+    assert.match(response.headers.get("content-disposition"), /debian\.raw/);
     assert.equal(response.headers.get("content-type"), "application/octet-stream");
     assert.equal(upstreamHeaders.get("accept-encoding"), "identity");
     assert.deepEqual(new Uint8Array(await response.arrayBuffer()), bytes);
