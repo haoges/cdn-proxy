@@ -15,7 +15,7 @@ const COLO_NAMES = Object.freeze({
 const REQUEST_BLOCKED = new Set([
   "host", "connection", "keep-alive", "proxy-authenticate",
   "proxy-authorization", "te", "trailer", "transfer-encoding",
-  "upgrade", "cookie", "origin", "referer", "forwarded",
+  "upgrade", "cookie", "authorization", "origin", "referer", "forwarded",
   "x-forwarded-for", "x-forwarded-host", "x-forwarded-proto",
   "x-real-ip", "true-client-ip", "cf-connecting-ip", "cf-ipcountry",
   "cf-ray", "eo-connecting-ip", "accept-encoding"
