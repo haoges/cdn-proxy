@@ -1,0 +1,15 @@
+{
+  "name": "universal-cdn-proxy",
+  "version": "3.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "pages:dev": "wrangler pages dev public",
+    "pages:deploy": "wrangler pages deploy public"
+  },
+  "devDependencies": {
+    "wrangler": "^4.45.0"
+  }
+}
