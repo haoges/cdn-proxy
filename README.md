@@ -16,7 +16,7 @@ EdgeOne 本项目使用 Edge Functions，不是 Node.js Cloud Functions。函数
 
     https://proxy.example.com/https://example.com/path
 
-也支持 URL 编码形式。目标协议只允许 HTTP/HTTPS。目标 URL 自带 query 会保留，代理入口 query 会追加到目标 URL（token 参数除外）。
+也支持 URL 编码形式。目标协议只允许 HTTP/HTTPS。目标 URL 自带 query 会保留，代理入口 query 会追加到目标 URL（token、download=1 参数除外）。常见镜像/安装包/磁盘镜像扩展名（如 raw、img、iso、zip、gz、xz、zst、deb）会自动添加 `Content-Disposition: attachment`；其他资源可追加 `?download=1` 强制浏览器下载。大文件采用 ReadableStream 透传，不缓存到内存，并保留 Range/206/Content-Range 断点续传响应。上游请求优先使用 `Accept-Encoding: identity`，减少边缘运行时自动解压导致的编码/长度头不一致。
 
 健康检查：/health 或 /healthz
 
