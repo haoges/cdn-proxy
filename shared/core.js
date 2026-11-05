@@ -247,9 +247,10 @@ function makeProxyResponse(response, finalUrl, incoming, edge, config, forceDown
     const filename = getDownloadFilename(finalUrl);
     const encoded = encodeURIComponent(filename).replace(/['()*]/g, ch => "%" + ch.charCodeAt(0).toString(16).toUpperCase());
     if (forceDownload || !headers.has("Content-Disposition")) {
-      headers.set("Content-Disposition", 'attachment; filename="download"; filename*=UTF-8\'\'' + encoded);
+      const fallback = filename.replace(/[^\x20-\x7e]/g, "_").replace(/["\\]/g, "_");
+      headers.set("Content-Disposition", 'attachment; filename="' + fallback + '"; filename*=UTF-8\'\'' + encoded);
     }
-    if (!headers.has("Content-Type") || /^text\\/i.test(headers.get("Content-Type") || "")) {
+    if (!headers.has("Content-Type") || /^text\//i.test(headers.get("Content-Type") || "")) {
       headers.set("Content-Type", "application/octet-stream");
     }
   }
