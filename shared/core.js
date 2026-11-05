@@ -48,7 +48,7 @@ function cors(config) {
     "Access-Control-Allow-Origin": config.corsOrigin,
     "Access-Control-Allow-Methods": "GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "Authorization, Content-Type, Range, Accept, User-Agent, If-Modified-Since, If-None-Match",
-    "Access-Control-Expose-Headers": "Content-Length, Content-Range, Accept-Ranges, ETag, Last-Modified, X-Proxy-Platform, X-Proxy-Colo, X-Proxy-Version",
+    "Access-Control-Expose-Headers": "Content-Length, Content-Range, Content-Disposition, Accept-Ranges, ETag, Last-Modified, X-Proxy-Platform, X-Proxy-Colo, X-Proxy-Version",
     "Access-Control-Max-Age": "86400",
     "Vary": "Origin"
   };
@@ -87,7 +87,8 @@ export async function handleRequest(request, env = {}, platform = {}) {
 
   try {
     const result = await fetchRedirects(request, target, headers, config);
-    return makeProxyResponse(result.response, result.url, incoming, edge, config);
+    const forceDownload = incoming.searchParams.get("download") === "1";
+    return makeProxyResponse(result.response, result.url, incoming, edge, config, forceDownload);
   } catch (error) {
     const status = error && error.name === "AbortError" ? 504 : 502;
     return textError(status === 504 ? "上游请求超时" : "代理请求失败，请检查目标地址或上游连接", status, config);
@@ -115,7 +116,8 @@ function parseTarget(incoming, maxLength) {
   if (target.username || target.password) throw new Error("不允许 URL 内嵌用户名或密码");
   // Use forEach instead of URLSearchParams iteration for EdgeOne runtime compatibility.
   incoming.searchParams.forEach((value, key) => {
-    if (key.toLowerCase() !== "token") target.searchParams.append(key, value);
+    const lower = key.toLowerCase();
+    if (lower !== "token" && !(lower === "download" && value === "1")) target.searchParams.append(key, value);
   });
   return target;
 }
@@ -176,6 +178,9 @@ async function fetchRedirects(request, target, headers, config) {
     const timer = setTimeout(() => { timedOut = true; controller.abort(); }, config.timeout);
     let response;
     try {
+      // Ask the origin for an uncompressed representation. This avoids stale
+      // Content-Encoding / Content-Length metadata after edge-runtime decompression.
+      headers.set("Accept-Encoding", "identity");
       response = await fetch(current.toString(), {
         method, headers, body: ["GET", "HEAD"].includes(method) ? undefined : body,
         redirect: "manual", signal: controller.signal
@@ -212,7 +217,15 @@ async function fetchRedirects(request, target, headers, config) {
     try { if (response.body) await response.body.cancel(); } catch {}
   }
 }
-function makeProxyResponse(response, finalUrl, incoming, edge, config) {
+const DOWNLOAD_EXTENSIONS = /\\.(?:raw|img|iso|dmg|zip|7z|rar|tar|tgz|gz|bz2|xz|zst|deb|rpm|apk|msi|exe|bin|qcow2|vmdk|vdi|ova|ovf|mp4|mkv|mp3|flac|pdf)$/i;
+function getDownloadFilename(url) {
+  const parts = url.pathname.split("/");
+  let name = parts[parts.length - 1] || "download";
+  try { name = decodeURIComponent(name); } catch {}
+  name = name.replace(/[\\r\\n"]/g, "_").replace(/[\\x00-\\x1f\\x7f]/g, "_").trim();
+  return name || "download";
+}
+function makeProxyResponse(response, finalUrl, incoming, edge, config, forceDownload = false) {
   const headers = new Headers(response.headers);
   const connection = new Set((headers.get("Connection") || "").split(",").map(v => v.trim().toLowerCase()).filter(Boolean));
   for (const name of RESPONSE_HOP) headers.delete(name);
@@ -227,6 +240,19 @@ function makeProxyResponse(response, finalUrl, incoming, edge, config) {
   headers.set("X-Proxy-Platform", edge.platform);
   headers.set("X-Proxy-Colo", edge.node);
   if (edge.ip !== "unknown") headers.set("X-Proxy-Client-IP", edge.ip);
+
+  // Keep large files as a streaming body; never call text(), blob() or arrayBuffer().
+  // Force browser download for common binary extensions, or explicitly via ?download=1.
+  if (forceDownload || DOWNLOAD_EXTENSIONS.test(finalUrl.pathname)) {
+    const filename = getDownloadFilename(finalUrl);
+    const encoded = encodeURIComponent(filename).replace(/['()*]/g, ch => "%" + ch.charCodeAt(0).toString(16).toUpperCase());
+    if (forceDownload || !headers.has("Content-Disposition")) {
+      headers.set("Content-Disposition", 'attachment; filename="download"; filename*=UTF-8\'\'' + encoded);
+    }
+    if (!headers.has("Content-Type") || /^text\\/i.test(headers.get("Content-Type") || "")) {
+      headers.set("Content-Type", "application/octet-stream");
+    }
+  }
 
   const location = headers.get("Location");
   if (location) {
