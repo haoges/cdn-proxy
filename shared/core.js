@@ -18,7 +18,7 @@ const REQUEST_BLOCKED = new Set([
   "upgrade", "cookie", "origin", "referer", "forwarded",
   "x-forwarded-for", "x-forwarded-host", "x-forwarded-proto",
   "x-real-ip", "true-client-ip", "cf-connecting-ip", "cf-ipcountry",
-  "cf-ray", "eo-connecting-ip"
+  "cf-ray", "eo-connecting-ip", "accept-encoding"
 ]);
 const RESPONSE_HOP = new Set([
   "connection", "keep-alive", "proxy-authenticate",
@@ -179,7 +179,11 @@ async function fetchRedirects(request, target, headers, config) {
         redirect: "manual", signal: controller.signal
       });
     } catch (error) {
-      if (timedOut) error.name = "AbortError";
+      if (timedOut) {
+        const timeoutError = new Error("Upstream request timed out");
+        timeoutError.name = "AbortError";
+        throw timeoutError;
+      }
       throw error;
     } finally {
       clearTimeout(timer);
