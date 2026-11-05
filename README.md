@@ -84,7 +84,7 @@ Git 集成配置：
 - 拒绝 localhost、私有/保留 IPv4、非全球单播 IPv6、内网域名和 URL 用户密码。
 - 每次 GET/HEAD 重定向都会重新校验目标；最多 5 跳。
 - 非 GET/HEAD 请求不自动跟随重定向，避免重放流式请求体。
-- 不转发 Cookie、Origin、Referer、客户端伪造的转发 IP 头及 Hop-by-Hop 请求头。
+- 不转发 Cookie、Authorization、Origin、Referer、客户端伪造的转发 IP 头及 Hop-by-Hop 请求头，避免代理令牌或用户凭据泄漏到目标站点。
 - 不信任任意请求头作为客户端真实 IP；平台无法确认时显示 unknown。
 - 不使用 Cloudflare 专属 fetch cf 参数，代理核心只使用 Web 标准 Fetch API。
 - DNS 解析结果由平台网络栈处理。纯 Web Fetch 代码无法在所有平台可靠执行解析后 IP 限制；高保证 SSRF 防护应采用目标域名白名单或受控出口。
