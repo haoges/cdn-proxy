@@ -107,6 +107,7 @@ function parseTarget(incoming, maxLength) {
   if (!raw) throw new Error("缺少目标 URL");
   try { raw = decodeURIComponent(raw); } catch { throw new Error("URL 编码无效"); }
   if (raw.length > maxLength) throw new Error("目标 URL 超出长度限制");
+  if (/^[a-z][a-z0-9+.-]*:\/\//i.test(raw) && !/^https?:\/\//i.test(raw)) throw new Error("仅允许 HTTP 和 HTTPS 协议");
   if (!/^https?:\/\//i.test(raw)) raw = incoming.protocol + "//" + raw;
   let target;
   try { target = new URL(raw); } catch { throw new Error("目标 URL 格式无效"); }
