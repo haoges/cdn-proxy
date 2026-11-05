@@ -68,7 +68,7 @@ Git 集成配置：
 
 ## EdgeOne Makers
 
-1. 导入本仓库。
+1. 可通过 [EdgeOne Makers 一键导入部署](https://edgeone.ai/pages/new?repository-url=https%3A%2F%2Fgithub.com%2Fhaoges%2Fcdn-proxy%26project-name%3Dcdn-proxy%26output-directory%3Dpublic%26install-command%3Dnpm%2520install%2520--omit%253Ddev) 导入本仓库，或在控制台手动导入。
 2. 选择 Edge Functions（不是 Cloud Functions）。
 3. 函数目录使用仓库根目录下的 edge-functions。
 4. 使用 Handler / Functions 模式，入口为 onRequest(context)。
