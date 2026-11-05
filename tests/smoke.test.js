@@ -61,3 +61,25 @@ test("proxy bearer token is never forwarded to upstream", async () => {
     globalThis.fetch = originalFetch;
   }
 });
+
+test("proxy route forwards query parameters without relying on iterable APIs", async () => {
+  const originalFetch = globalThis.fetch;
+  let upstreamUrl;
+  globalThis.fetch = async (url) => {
+    upstreamUrl = new URL(String(url));
+    return new Response("ok", { status: 200 });
+  };
+  try {
+    const response = await handleRequest(
+      new Request("https://proxy.test/https://example.com/path?a=1&token=should-not-forward&b=2"),
+      {},
+      { name: "EdgeOne Makers" }
+    );
+    assert.equal(response.status, 200);
+    assert.equal(upstreamUrl.searchParams.get("a"), "1");
+    assert.equal(upstreamUrl.searchParams.get("b"), "2");
+    assert.equal(upstreamUrl.searchParams.has("token"), false);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
