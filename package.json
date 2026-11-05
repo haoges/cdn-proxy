@@ -7,7 +7,8 @@
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "pages:dev": "wrangler pages dev public",
-    "pages:deploy": "wrangler pages deploy public"
+    "pages:deploy": "wrangler pages deploy public",
+    "test": "node --test"
   },
   "devDependencies": {
     "wrangler": "^4.45.0"
