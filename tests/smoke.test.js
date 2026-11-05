@@ -39,3 +39,25 @@ test("unsupported protocols are rejected", async () => {
   const response = await handleRequest(new Request("https://proxy.test/ftp://example.com/file"), {}, { name: "test" });
   assert.equal(response.status, 400);
 });
+
+test("proxy bearer token is never forwarded to upstream", async () => {
+  const originalFetch = globalThis.fetch;
+  let upstreamAuthorization = "not-called";
+  globalThis.fetch = async (_url, init) => {
+    upstreamAuthorization = new Headers(init.headers).get("Authorization");
+    return new Response("ok", { status: 200 });
+  };
+  try {
+    const response = await handleRequest(
+      new Request("https://proxy.test/https://example.com/", {
+        headers: { Authorization: "Bearer test-secret" }
+      }),
+      { PROXY_TOKEN: "test-secret" },
+      { name: "test" }
+    );
+    assert.equal(response.status, 200);
+    assert.equal(upstreamAuthorization, null);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
