@@ -113,9 +113,10 @@ function parseTarget(incoming, maxLength) {
   try { target = new URL(raw); } catch { throw new Error("目标 URL 格式无效"); }
   if (!["http:", "https:"].includes(target.protocol)) throw new Error("仅允许 HTTP 和 HTTPS 协议");
   if (target.username || target.password) throw new Error("不允许 URL 内嵌用户名或密码");
-  for (const [key, value] of incoming.searchParams) {
+  // Use forEach instead of URLSearchParams iteration for EdgeOne runtime compatibility.
+  incoming.searchParams.forEach((value, key) => {
     if (key.toLowerCase() !== "token") target.searchParams.append(key, value);
-  }
+  });
   return target;
 }
 function validateTarget(url) {
@@ -157,11 +158,11 @@ function nonPublicIPv6(host) {
 function filterRequestHeaders(source) {
   const result = new Headers();
   const connection = new Set((source.get("Connection") || "").split(",").map(v => v.trim().toLowerCase()).filter(Boolean));
-  for (const [name, value] of source.entries()) {
+  // Headers.forEach is more widely implemented across edge runtimes than entries() iteration.
+  source.forEach((value, name) => {
     const key = name.toLowerCase();
-    if (REQUEST_BLOCKED.has(key) || connection.has(key)) continue;
-    result.set(name, value);
-  }
+    if (!REQUEST_BLOCKED.has(key) && !connection.has(key)) result.set(name, value);
+  });
   return result;
 }
 async function fetchRedirects(request, target, headers, config) {
