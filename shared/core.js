@@ -217,12 +217,12 @@ async function fetchRedirects(request, target, headers, config) {
     try { if (response.body) await response.body.cancel(); } catch {}
   }
 }
-const DOWNLOAD_EXTENSIONS = /\\.(?:raw|img|iso|dmg|zip|7z|rar|tar|tgz|gz|bz2|xz|zst|deb|rpm|apk|msi|exe|bin|qcow2|vmdk|vdi|ova|ovf|mp4|mkv|mp3|flac|pdf)$/i;
+const DOWNLOAD_EXTENSIONS = /\.(?:raw|img|iso|dmg|zip|7z|rar|tar|tgz|gz|bz2|xz|zst|deb|rpm|apk|msi|exe|bin|qcow2|vmdk|vdi|ova|ovf|mp4|mkv|mp3|flac|pdf)$/i;
 function getDownloadFilename(url) {
   const parts = url.pathname.split("/");
   let name = parts[parts.length - 1] || "download";
   try { name = decodeURIComponent(name); } catch {}
-  name = name.replace(/[\\r\\n"]/g, "_").replace(/[\\x00-\\x1f\\x7f]/g, "_").trim();
+  name = name.replace(/[\r\n"]/g, "_").replace(/[\x00-\x1f\x7f]/g, "_").trim();
   return name || "download";
 }
 function makeProxyResponse(response, finalUrl, incoming, edge, config, forceDownload = false) {
